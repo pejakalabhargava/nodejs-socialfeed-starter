@@ -1,25 +1,27 @@
 {
-  "name": "social-authenticator-demo",
+  "name": "social-authenticator",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec babel-node -- --stage 1 --optional strict -- index.js"
+    "start": "nodemon --exec babel-node -- -- index.js"
   },
   "dependencies": {
-    "bluebird": "^2.9.25",
-    "bluebird-nodeify": "^1.0.0",
-    "body-parser": "^1.12.3",
+    "babel-cli": "^6.6.5",
+    "babel-preset-node5": "^11.0.1",
+    "body-parser": "^1.15.0",
     "connect-flash": "^0.1.1",
-    "cookie-parser": "^1.3.4",
-    "ejs": "^2.3.1",
-    "express": "^4.0.0",
-    "express-session": "^1.11.1",
-    "lodash": "^3.8.0",
-    "mongoose": "^4.0.2",
-    "morgan": "^1.0.0",
-    "nodeifyit": "^1.0.1",
+    "cookie-parser": "^1.4.1",
+    "ejs": "^2.4.1",
+    "express": "^4.13.4",
+    "express-session": "^1.13.0",
+    "mongoose": "^4.4.11",
+    "morgan": "^1.7.0",
+    "nodeifyit": "^1.0.2",
+    "nodemon": "^1.9.1",
     "passport": "^0.2.1",
     "passport-local": "^1.0.0",
-    "require-dir": "^0.3.0",
-    "songbird": "^1.0.1"
+    "songbird": "^1.0.2",
+    "trycatch": "^1.5.21",
+    "lodash": "^3.8.0",
+    "require-dir": "^0.3.0"
   }
 }

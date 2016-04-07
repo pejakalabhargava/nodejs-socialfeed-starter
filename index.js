@@ -1,3 +1,5 @@
+require('./bootstrap')
+require('songbird')
 let path = require('path')
 let express = require('express')
 let morgan = require('morgan')
@@ -5,22 +7,24 @@ let cookieParser = require('cookie-parser')
 let bodyParser = require('body-parser')
 let session = require('express-session')
 let mongoose = require('mongoose')
-let requireDir = require('require-dir')
 let flash = require('connect-flash')
 
 let passportMiddleware = require('./app/middlewares/passport')
 
 const NODE_ENV = process.env.NODE_ENV
+const CONFIG = require('./config')
 
+/**
+ * Server Setup
+ */
 let app = express(),
-  config = requireDir('./config', {recurse: true}),
   port = process.env.PORT || 8000
 
-passportMiddleware.configure(config.auth[NODE_ENV])
+passportMiddleware.configure(CONFIG.auth[NODE_ENV])
 app.passport = passportMiddleware.passport
 
 // connect to the database
-mongoose.connect(config.database[NODE_ENV].url)
+mongoose.connect(CONFIG.database[NODE_ENV].url)
 
 // set up our express middleware
 app.use(morgan('dev')) // log every request to the console
@@ -48,5 +52,7 @@ app.use(flash())
 // configure routes
 require('./app/routes')(app)
 
-// start server
+/**
+ * Start Setup
+ */
 app.listen(port, ()=> console.log(`Listening @ http://127.0.0.1:${port}`))

@@ -1,17 +1,30 @@
 let mongoose = require('mongoose')
 
 let userSchema = mongoose.Schema({
-  // userModel properties here...
+  local: {
+    email: String,
+    password: String
+  },
+  /* TODO: Add social schemas
+  facebook: {
+    id: ...,
+    token: ...,
+    ...
+  }
+  */
 })
 
 userSchema.methods.generateHash = async function(password) {
-  throw new Error('Not Implemented.')
+  let hash = await crypto.promise.pbkdf2(password, PEPPER, 4096, 512, 'sha256')
+  return hash.toString('hex')
 }
 
 userSchema.methods.validatePassword = async function(password) {
-  throw new Error('Not Implemented.')
+  let hash = await crypto.promise.pbkdf2(password, PEPPER, 4096, 512, 'sha256')
+  return hash.toString('hex') === this.password
 }
 
+// Utility function for linking accounts
 userSchema.methods.linkAccount = function(type, values) {
   // linkAccount('facebook', ...) => linkFacebookAccount(values)
   return this['link'+_.capitalize(type)+'Account'](values)
