@@ -1,84 +1,173 @@
+let LocalStrategy = require('passport-local').Strategy
 let passport = require('passport')
 let wrap = require('nodeifyit')
 let User = require('../models/user')
+let FacebookStrategy = require('passport-facebook').Strategy
+let GoogleStrategy = require('passport-google-oauth2').Strategy
+let TwitterStrategy = require('passport-twitter').Strategy
 
 // Handlers
 async function localAuthHandler(email, password) {
-  let user = await User.promise.findOne({email})
+    let user = await User.promise.findOne({'local.email': email})
 
-  if (!user || email !== user.email) {
-    return [false, {message: 'Invalid username'}]
-  }
+    if (!user || email !== user.local.email) {
+        return [false, {message: 'Invalid username'}]
+    }
 
-  if (!await user.validatePassword(password)) {
-    return [false, {message: 'Invalid password'}]
-  }
-  return user
+    if (!await user.validatePassword(password)) {
+        return [false, {message: 'Invalid password'}]
+    }
+    return user
 }
 
 async function localSignupHandler(email, password) {
-  email = (email || '').toLowerCase()
-  // Is the email taken?
-  if (await User.promise.findOne({email})) {
-    return [false, {message: 'That email is already taken.'}]
-  }
 
-  // create the user
-  let user = new User()
-  user.email = email
-  // Use a password hash instead of plain-text
-  user.password = await user.generateHash(password)
-  return await user.save()
+    email = (email || '').toLowerCase()
+    // Is the email taken?
+    if (await User.promise.findOne({'local.email': email})) {
+        return [false, {message: 'That email is already taken.'}]
+    }
+
+    // create the user
+    let user = new User().local;
+    user.email = email
+    // Use a password hash instead of plain-text
+    user.password = await user.generateHash(password)
+    return await user.save()
 }
 
 // 3rd-party Auth Helper
 function loadPassportStrategy(OauthStrategy, config, userField) {
-  config.passReqToCallback = true
-  passport.use(new OauthStrategy(config, wrap(authCB, {spread: true})))
+    config.passReqToCallback = true
+    passport.use(new OauthStrategy(config, wrap(authCB, {spread: true})))
 
-  async function authCB(req, token, _ignored_, account) {
-      // 1. Load user from store by matching user[userField].id && account.id
-      // 2. If req.user exists, we're authorizing (linking account to an existing user)
-      // 2a. Ensure it's not already associated with another user
-      // 2b. Link account
-      // 3. If req.user !exist, we're authenticating (logging in an existing user)
-      // 3a. If Step 1 failed (existing user for 3rd party account does not already exist), create a user and link this account (Otherwise, user is logging in).
-      // 3c. Return user
-  }
+    async function authCB(req, token, _ignored_, account) {
+        console.log("req.user ", req.user)
+        if (userField === 'facebook') {
+            let userFB = await User.promise.findOne({'facebook.id': account.id})
+            if (userFB) return userFB;
+            if (req.user) {
+                if (!req.user.facebook.id && !userFB) {
+                    console.log('Save the user')
+                    let user = await User.promise.findById(req.user._id)
+                    user.facebook.id = account.id
+                    user.facebook.token = token
+                    user.facebook.name = account.name.givenName + ' ' + account.name.familyName;
+                    user.facebook.email = account.emails[0].value
+                    return await user.save()
+                }
+            }
+            else {
+                console.log('Creating the account')
+                let user = new User()
+                user.facebook.id = account.id
+                user.facebook.token = token
+                user.facebook.email = account.emails[0].value
+                user.facebook.name = account.name.givenName + ' ' + account.name.familyName;
+                return await user.save()
+
+
+            }
+        } else if (userField === 'twitter') {
+            let twitterUser = await User.promise.findOne({'twitter.id': account.id})
+            if (twitterUser) return twitterUser
+            if (req.user) {
+                if (!req.user.twitter.id && !twitterUser) {
+                    let user = await User.promise.findById(req.user._id)
+                    user.twitter.id = account.id
+                    user.twitter.token = token
+                    user.twitter.username = account.username
+                    user.twitter.displayName = account.displayName
+                    return await user.save()
+                }
+            } else {
+                let user = new User()
+                user.twitter.id = account.id
+                user.twitter.token = token
+                user.twitter.username = account.username
+                user.twitter.displayName = account.displayName
+                return await user.save()
+
+            }
+
+        } else if (userField === 'google') {
+            let googleUser = await User.promise.findOne({'google.id': account.id})
+            if (googleUser) return googleUser
+            if (req.user) {
+                if (!req.user.google.id && !googleUser) {
+                    let user = await User.promise.findById(req.user._id)
+                    user.google.id = account.id
+                    user.google.token = token
+                    user.google.email = account.emails[0].value
+                    user.google.name = account.displayName
+                    return await user.save()
+                }
+            }
+            else {
+                let user = new User()
+                user.google.id = account.id
+                user.google.token = token
+                user.google.email = account.emails[0].value
+                user.google.name = account.displayName
+                return await user.save()
+
+            }
+        }
+    }
 }
 
 function configure(CONFIG) {
-  // Required for session support / persistent login sessions
-  passport.serializeUser(wrap(async (user) => user._id))
-  passport.deserializeUser(wrap(async (id) => {
-    return await User.promise.findById(id)
-  }))
+    // Required for session support / persistent login sessions
+    passport.serializeUser(wrap(async (user) => user._id))
+    passport.deserializeUser(wrap(async (id) => {
+        User.promise.findById(id)
+        return await User.promise.findById(id)
+    }))
 
-  /**
-   * Local Auth
-   */
-  let localStrategy = new LocalStrategy({
-    usernameField: 'email', // Use "email" instead of "username"
-    failureFlash: true // Enable session-based error logging
-  }, wrap(localAuthHandler, {spread: true}))
-  let localSignupStrategy = new LocalStrategy({
-    usernameField: 'email',
-    failureFlash: true
-  }, wrap(localSignupHandler, {spread: true}))
+    /**
+     * Local Auth
+     */
+    let localStrategy = new LocalStrategy({
+        usernameField: 'email', // Use "email" instead of "username"
+        failureFlash: true // Enable session-based error logging
+    }, wrap(localAuthHandler, {spread: true}))
 
-  passport.use('local-login', localLoginStrategy)
-  passport.use('local-signup', localSignupStrategy)
+    let localSignupStrategy = new LocalStrategy({
+        usernameField: 'email',
+        failureFlash: true
+    }, wrap(localSignupHandler, {spread: true}))
 
-  /**
-   * 3rd-Party Auth
-   */
+    passport.use('local-login', localStrategy)
+    passport.use('local-signup', localSignupStrategy)
 
-  // loadPassportStrategy(LinkedInStrategy, {...}, 'linkedin')
-  // loadPassportStrategy(FacebookStrategy, {...}, 'facebook')
-  // loadPassportStrategy(GoogleStrategy, {...}, 'google')
-  // loadPassportStrategy(TwitterStrategy, {...}, 'twitter')
+    /**
+     * 3rd-Party Auth
+     */
 
-  return passport
+        // loadPassportStrategy(LinkedInStrategy, {...}, 'linkedin')
+        //loadPassportStrategy(FacebookStrategy, {...}, 'facebook')
+        // loadPassportStrategy(GoogleStrategy, {...}, 'google')
+        // loadPassportStrategy(TwitterStrategy, {...}, 'twitter')
+    loadPassportStrategy(FacebookStrategy, {
+        clientID: CONFIG.auth["facebook"].consumerKey,
+        clientSecret: CONFIG.auth["facebook"].consumerSecret,
+        callbackURL: CONFIG.auth["facebook"].callbackUrl,
+        profileFields: ['id', 'email', 'gender', 'link', 'locale', 'name', 'timezone', 'updated_time', 'verified']
+    }, 'facebook')
+
+    loadPassportStrategy(TwitterStrategy, {
+        consumerKey: CONFIG.auth["twitter"].consumerKey,
+        consumerSecret: CONFIG.auth["twitter"].consumerSecret,
+        callbackURL: CONFIG.auth["twitter"].callbackUrl
+    }, 'twitter')
+
+    loadPassportStrategy(GoogleStrategy, {
+        clientID: CONFIG.auth["google"].clientID,
+        clientSecret: CONFIG.auth["google"].clientSecret,
+        callbackURL: CONFIG.auth["google"].callbackUrl
+    }, 'google')
+    return passport
 }
+
 
 module.exports = {passport, configure}

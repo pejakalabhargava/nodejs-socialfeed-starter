@@ -11,7 +11,7 @@ let flash = require('connect-flash')
 
 let passportMiddleware = require('./app/middlewares/passport')
 
-const NODE_ENV = process.env.NODE_ENV
+const NODE_ENV = process.env.NODE_ENV || 'development'
 const CONFIG = require('./config')
 
 /**
@@ -20,8 +20,7 @@ const CONFIG = require('./config')
 let app = express(),
   port = process.env.PORT || 8000
 
-passportMiddleware.configure(CONFIG.auth[NODE_ENV])
-app.passport = passportMiddleware.passport
+app.passport = passportMiddleware.configure(CONFIG)
 
 // connect to the database
 mongoose.connect(CONFIG.database[NODE_ENV].url)
@@ -39,7 +38,8 @@ app.set('view engine', 'ejs') // set up ejs for templating
 app.use(session({
   secret: 'ilovethenodejs',
   resave: true,
-  saveUninitialized: true
+  saveUninitialized: true,
+  rolling: true
 }))
 
 // Setup passport authentication middleware

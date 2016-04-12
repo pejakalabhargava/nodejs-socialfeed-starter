@@ -13,15 +13,25 @@
     "ejs": "^2.4.1",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
+    "express-then": "^1.0.3",
+    "fb": "^1.0.2",
+    "lodash": "^3.8.0",
     "mongoose": "^4.4.11",
     "morgan": "^1.7.0",
     "nodeifyit": "^1.0.2",
     "nodemon": "^1.9.1",
+    "oauth2": "0.0.1",
     "passport": "^0.2.1",
+    "passport-facebook": "^2.1.0",
+    "passport-google": "^0.3.0",
+    "passport-google-oauth": "^1.0.0",
+    "passport-google-oauth2": "^0.1.6",
     "passport-local": "^1.0.0",
+    "passport-twitter": "^1.0.4",
+    "request": "^2.70.0",
+    "require-dir": "^0.3.0",
     "songbird": "^1.0.2",
     "trycatch": "^1.5.21",
-    "lodash": "^3.8.0",
-    "require-dir": "^0.3.0"
+    "twitter": "^1.2.5"
   }
 }
