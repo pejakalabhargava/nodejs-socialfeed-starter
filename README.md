@@ -6,6 +6,8 @@ Time spent: 10 hrs
 
 ### Features
 
+Note : Make sure to add the keys in auth.js before testing the code.For security reasons i have removed my keys.
+
 #### Required
 
 - [X] User can sign in and connect to Twitter using `passport`.
